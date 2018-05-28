@@ -1,0 +1,6 @@
+San Diego parking meters loacation dataset:
+  https://data.sandiego.gov/datasets/parking-meters-locations/
+
+Podobne aplikacje:
+ + https://parknav.com/city/san-diego
+ + https://sandiego.bestparking.com/
