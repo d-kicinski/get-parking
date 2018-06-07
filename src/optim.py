@@ -8,7 +8,7 @@ m = ConcreteModel()
 
 DRIVER_NUM = 10
 PARKING_NUM = 2
-PARKING_CAPACITY = 5
+PARKING_CAPACITY = 8
 PARKING_MAX_PRICE = 0.6
 
 # Brakujące miejsca
@@ -21,12 +21,11 @@ else:
 
 m.L = 5000
 
-m.alpha = 0.9
-m.gamma = 1.1
+m.alpha = 1.0
+m.gamma = 0.0
 
-m.alpha_price = -1.5
-m.gamma_price = 0.9
-
+m.alpha_price = 1.2
+m.gamma_price = 0.2
 #m.eps = 0.05
 m.eps =  1/(DRIVER_NUM*PARKING_NUM)
 #m.eps2 = 1/(PARKING_NUM  * 5)
@@ -38,10 +37,10 @@ X_a = {1:5.5,
        3:5.5,
        4:6.5,
        5:6.0,
-       6:2.5,
+       6:1.5,
        7:1.5,
        8:1.5,
-       9:2.0,
+       9:1.0,
        10:1.5}#, 11:0.5 , 12:0.5 , 13:0.5 , 14:0.5 , 15:0.5 , 16:0.5, 17:0.5,
        #18:1000.5, 19:0.5, 20:0.5 }
 
@@ -50,10 +49,10 @@ X_r = {1:7.5,
        3:7.5,
        4:8.5,
        5:8.0,
-       6:4.5,
+       6:3.5,
        7:3.5,
        8:3.5,
-       9:4.0,
+       9:3.0,
        10:3.5}
 # 11:4.0 , 12:6.0 , 13:8.0 , 14:10.0 , 15:30.0 , 16:32.0,
        #17:34.0, 18:36.0, 19:38.0, 20:40.0}
@@ -278,9 +277,10 @@ else:
 def price_ref1(m, i, j):
     global L
     k=L
-    k=2
-    val = m.alpha_price * (( m.x[j] - m.X_a[i]*m.V[i,j]) /
-                     (m.X_r[i]-m.X_a[i])) - (1-m.V[i,j])*m.L
+    #val = (-1/m.X_a[i]**2) * (( m.x[j] - m.X_a[i] /
+                     #(m.X_r[i]-m.X_a[i]) - (1-m.V[i,j])*m.L)
+
+     val =  m.gamma_price * (m.x[j]-m.X_a[i]*m.V[i,j])/(m.X_r[i]-m.X_a[i]) - (1-m.V[i,j])*m.L
 
     return m.a[i,k] >= val
 m.price_ref1 = Constraint(m.M, m.N, rule=price_ref1)
@@ -289,7 +289,6 @@ m.price_ref1 = Constraint(m.M, m.N, rule=price_ref1)
 def price_ref2(m, i, j):
     global L
     k=L
-    k=2
     val = ((m.x[j] - m.X_a[i]*m.V[i,j]) /
                      (m.X_r[i]-m.X_a[i])) - (1-m.V[i,j])*m.L
 
@@ -300,9 +299,8 @@ m.price_ref2 = Constraint(m.M, m.N,rule=price_ref2)
 def price_ref3(m, i, j):
     global L
     k=L
-    k=2
-    val = m.gamma_price * (( m.x[j] - m.X_r[i]*m.V[i,j]) /
-                     (m.X_r[i]-m.X_a[i]) + 1) - (1-m.V[i,j])*m.L
+    val =  m.alpha_price * (( m.x[j] - m.X_r[i]*m.V[i,j]) /
+                     (m.X_r[i]-m.X_a[i])) + 1 - (1-m.V[i,j])*m.L
 
     return m.a[i,k] >= val
 m.price_ref3 = Constraint(m.M, m.N ,rule=price_ref3)
@@ -310,7 +308,7 @@ m.price_ref3 = Constraint(m.M, m.N ,rule=price_ref3)
 
 # Metoda punktu referencyjnego dla pozostałych
 def ref1(m,i,k):
-    val = m.alpha * sum(m.V[i,j] * ((C_m(m,i,j,k) - Ca_m(m,i,j,k)) /
+    val = m.gamma * sum(m.V[i,j] * ((C_m(m,i,j,k) - Ca_m(m,i,j,k)) /
     (Cr_m(m,i,j,k) - Ca_m(m,i,j,k))) for j in m.N)
 
     return m.a[i,k] >= val
@@ -325,7 +323,7 @@ m.ref2 = Constraint(m.M, m.K, rule=ref2)
 
 
 def ref3(m,i,k):
-    val = m.gamma * sum(m.V[i,j] * ((C_m(m,i,j,k) - Cr_m(m,i,j,k)) /
+    val = m.alpha * sum(m.V[i,j] * ((C_m(m,i,j,k) - Cr_m(m,i,j,k)) /
     (Cr_m(m,i,j,k) - Ca_m(m,i,j,k))) for j in m.N) + 1
 
     return m.a[i,k] >= val
@@ -359,6 +357,25 @@ def pyomo_postprocess(options=None, instance=None, results=None):
     print("Sum po korekcji z eps({}): {}".format(m.eps, m.eps*val))
     print("eps = ", m.eps)
 
+
+
+def calc_prices():
+    prices = []
+
+    parking 1 : ceny
+
+    V = values(m.V)
+    for j in m.N:
+        asp_prices =[]
+        for i in m.M:
+            if V[i,j] == 1:
+                asp_prices.append(X_a[i]
+        prices.appen(max(asp_prices))
+
+    return prices
+
+
+
 if __name__ == '__main__':
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory
@@ -380,5 +397,7 @@ if __name__ == '__main__':
     results.write()
     print("\nDisplaying Solution\n" + '-'*60)
     pyomo_postprocess(None, m, results)
+
+    print(calc_prices())
 
 #m.pprint()

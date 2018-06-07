@@ -18,7 +18,31 @@ Input: Current location: Address
 Output:
       Driving distance nad duration to parking
       Walking distane and duration from parking to place of destination
+
+
+Bounding rect:
+
+
 """
+
+L = (32.713772, -117.161030)
+U = (32.717852, -117.160088)
+B = (32.709409, -117.157039)
+R = (32.711554, -117.150366)
+
+
+DST = (32.714711, -117.155766)
+
+SEED = 1337
+random.seed(SEED)
+
+
+def sample_drivers(num=50):
+    drivers = []
+    for n in range(50):
+        drivers.append( (random.uniform(B[0], U[0]), random.uniform(L[1],R[1])) )
+    return drivers
+
 
 def main():
     with open('API.json', 'r') as fp:
@@ -116,7 +140,7 @@ def ask_google(gmaps, current_loc, parking_loc, destination_loc, verbose=False):
 
 
 
-def plot_column(column_name, filename=None):
+def plot_column(gmap, df, column_name, marker=False, filename=None):
     """Plots single column onto map
 
     Parameters
@@ -128,27 +152,57 @@ def plot_column(column_name, filename=None):
                is the name od plotted column with '.html' extension
     """
 
-    gmap = gmplot.GoogleMapPlotter.from_geocode("San Diego")
     print("dupa")
-    df = _prepare_data()
     zones_df = dict(tuple(df.groupby(column_name)))
     zones = [zones_df[x] for x in zones_df]
     for i, zone in enumerate(zones):
         lats, lons = zip(*zone['geo'].values.tolist())
-        gmap.scatter(lats, lons, _rand_color(), size=10, marker=False)
+        if marker:
+            for d in zone['geo'].values.tolist():
+                gmap.marker(d[0], d[1], 'black')
+        else:
+            gmap.scatter(lats, lons, _rand_color(), size=10, marker=False)
 
     print("dupa")
-    if filename is None:
-        filename = column_name + ".html"
-    gmap.draw(filename)
-    print("dupa")
+    #if filename is None:
+        #filename = column_name + ".html"
+    #gmap.draw(filename)
+    #print("dupa")
 
 
+def plot_drivers(gmap, drivers):
+    lats, lons = zip(*drivers)
+    for d in drivers:
+        gmap.marker(d[0], d[1], 'cornflowerblue')
+
+def plot_destinations(gmap, destination):
+    gmap.marker(destination[0], destination[1], 'red')
 
 def main_plot():
-    plot_column('zone')
-    plot_column('area')
-    plot_column('price')
+    #plot_column('zone')
+    #plot_column('area')
+
+    df = _prepare_data()
+    df = filter_by_rect(df)
+
+    # sampling parkings
+    df = df.sample(n=10, random_state=SEED)
+    drivers = sample_drivers(num=50)
+
+    gmap = gmplot.GoogleMapPlotter.from_geocode("San Diego")
+    plot_column(gmap, df, 'price', marker=True)
+    plot_drivers(gmap, drivers)
+    plot_destinations(gmap, DST)
+
+    gmap.draw("eh.html")
+
+
+def filter_by_rect(df):
+    #df = _prepare_data()
+    df = df[df['latitude'].between(B[0], U[0], inclusive=False)]
+    df = df[df['longitude'].between(L[1], R[1], inclusive=False)]
+    return df
+
 
 def _prepare_data(verbose=False):
     """Prepare dataset for ploting and further computation
@@ -163,7 +217,7 @@ def _prepare_data(verbose=False):
 
     """
 
-    df = pd.read_csv("dataset/parking_data.csv")
+    df = pd.read_csv("../dataset/parking_data.csv")
     data = df['config_name']
     df['geo'] = df[['latitude', 'longitude']].values.tolist()
     df = df[['geo','latitude','longitude', 'zone', 'area']]
@@ -204,6 +258,6 @@ def _rand_color(string=True):
 
 
 if __name__ == "__main__":
-    main()
+    main_plot()
     #create_map()
     #main_plot()
