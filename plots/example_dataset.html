@@ -3,6 +3,32 @@
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <title>Google Maps - pygmaps </title>
+<style>
+ html, body {
+     margin: 0;
+     padding: 0;
+     height: 100%;
+     width: 100%;
+ }
+ #map {
+     height: 400px;
+     width: 100%;
+ }
+ #legend {
+     font-family: Arial, sans-serif;
+     background: #fff;
+     padding: 10px;
+     margin: 10px;
+     border: 3px solid #000;
+ }
+ #legend h3 {
+     margin-top: 0;
+ }
+ #legend img {
+     vertical-align: middle;
+ }
+</style>
+
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false"></script>
 <script type="text/javascript">
 	function initialize() {
@@ -563,10 +589,35 @@
 		});
 		marker.setMap(map);
 
+
+    var legend = document.getElementById('legend');
+
+    var idk ='/home/dave/code/python/get-parking/env/lib/python3.6/site-packages/gmplot/markers/FF0000.png';
+    var client = '/home/dave/code/python/get-parking/env/lib/python3.6/site-packages/gmplot/markers/6495ED.png';
+    var parking = '/home/dave/code/python/get-parking/env/lib/python3.6/site-packages/gmplot/markers/000000.png';
+
+    var div = document.createElement('div');
+    div.innerHTML = '<img src="' + parking + '"> ' + "Parkingi";
+    legend.appendChild(div);
+
+    var div = document.createElement('div');
+    div.innerHTML = '<img src="' + client + '"> ' + "Kierowcy";
+    legend.appendChild(div);
+
+    var div = document.createElement('div');
+    div.innerHTML = '<img src="' + idk + '"> ' + "Cel";
+    legend.appendChild(div);
+
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
+
+
 	}
 </script>
 </head>
 <body style="margin:0px; padding:0px;" onload="initialize()">
-	<div id="map_canvas" style="width: 100%; height: 100%;"></div>
+<div id="legend"><h3>Legenda</h3></div>
+
+
+<div id="map_canvas" style="width: 100%; height: 100%;"></div>
 </body>
 </html>

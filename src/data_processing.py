@@ -4,7 +4,7 @@ import json
 from gmplot import gmplot
 import pandas as pd
 import random
-
+import pickle
 
 """Notes:
 Need 2 request:
@@ -50,16 +50,31 @@ def main():
 
     gmaps = googlemaps.Client(key=key['api_key'])
 
+    df = _prepare_data()
+    df = filter_by_rect(df)
 
-    loc = "San Diego High School 1405 Park Blvd San Diego, CA 92101"
-    dest = " The New Children’s Museum 200 W Island Ave San Diego, CA 92101"
+    # sampling parkings
+    parkings = df.sample(n=10, random_state=SEED)["geo"].tolist()
+    drivers = sample_drivers(num=50)
+    destination = DST
 
-    # Ask database for parking spots, belowe is temporary
-    park = "Wells Fargo Bank 610 1st Ave San Diego, CA 92101"
-    park2 = "Ralphs 101 G St San Diego, CA 92101"
+    dataset = {"output": []}
+    for d in drivers:
+        out = ask_google(gmaps, d, parkings, destination, verbose=False)
+        dataset["output"].append(out)
+    pickle.dump(dataset, open( "dataset.p", "wb" ) )
+
+    print(dataset["output"][0])
+
+    #loc = "San Diego High School 1405 Park Blvd San Diego, CA 92101"
+    #dest = " The New Children’s Museum 200 W Island Ave San Diego, CA 92101"
+
+    ## Ask database for parking spots, belowe is temporary
+    #park = "Wells Fargo Bank 610 1st Ave San Diego, CA 92101"
+    #park2 = "Ralphs 101 G St San Diego, CA 92101"
 
 
-    print(ask_google(gmaps, loc, [park, park2], dest, verbose=False))
+    #print(ask_google(gmaps, loc, [park, park2], dest, verbose=False))
 
 
 def ask_google(gmaps, current_loc, parking_loc, destination_loc, verbose=False):
@@ -258,6 +273,7 @@ def _rand_color(string=True):
 
 
 if __name__ == "__main__":
-    main_plot()
+    #main()
+    #main_plot()
     #create_map()
     #main_plot()
